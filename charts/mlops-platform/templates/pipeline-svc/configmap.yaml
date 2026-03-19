@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pipeline-svc-config
+  labels:
+    {{- include "mlops-platform.labels" . | nindent 4 }}
+data:
+  {{- range $key, $val := .Values.pipelineSvc.env }}
+  {{ $key }}: {{ $val | quote }}
+  {{- end }}

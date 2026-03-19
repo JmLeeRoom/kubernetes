@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: serving-svc
+  labels:
+    {{- include "mlops-platform.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "mlops-platform.selectorLabels" (dict "component" "serving-svc") | nindent 4 }}
+  ports:
+    - port: {{ .Values.servingSvc.port }}
+      targetPort: {{ .Values.servingSvc.port }}
+      protocol: TCP

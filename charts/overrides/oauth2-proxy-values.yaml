@@ -1,0 +1,21 @@
+config:
+  clientID: "mlops-dashboard"
+  clientSecret: "${KEYCLOAK_CLIENT_SECRET}"
+  cookieSecret: "${COOKIE_SECRET_32_BYTES_BASE64}"
+  configFile: |-
+    provider = "keycloak-oidc"
+    oidc_issuer_url = "https://keycloak.company.com/realms/mlops-platform"
+    upstreams = ["file:///dev/null"]
+    email_domains = ["*"]
+    skip_provider_button = true
+    cookie_secure = true
+    cookie_samesite = "lax"
+    cookie_expire = "24h"
+    set_xauthrequest = true
+    pass_access_token = true
+
+ingress:
+  enabled: true
+  hostname: auth.company.com
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"

@@ -1,0 +1,129 @@
+global:
+  domain: mlops.company.com
+  imageRegistry: ghcr.io/company/mlops-platform
+  imageTag: "0.1.0"
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets: []
+
+frontend:
+  replicas: 2
+  image:
+    repository: ""
+    tag: ""
+  port: 80
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+apiGateway:
+  replicas: 2
+  image:
+    repository: ""
+    tag: ""
+  port: 8000
+  env:
+    GATEWAY_MONITORING_SVC_URL: http://monitoring-svc:8001
+    GATEWAY_PIPELINE_SVC_URL: http://pipeline-svc:8002
+    GATEWAY_SERVING_SVC_URL: http://serving-svc:8003
+    GATEWAY_MLOPS_SVC_URL: http://mlops-svc:8004
+    GATEWAY_REDIS_URL: redis://redis:6379/0
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+monitoringSvc:
+  replicas: 1
+  image:
+    repository: ""
+    tag: ""
+  port: 8001
+  env:
+    MONITORING_PROMETHEUS_URL: http://prometheus:9090
+    MONITORING_LOKI_URL: http://loki:3100
+    MONITORING_TEMPO_URL: http://tempo:3200
+    MONITORING_ALERTMANAGER_URL: http://alertmanager:9093
+    MONITORING_REDIS_URL: redis://redis:6379/0
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+pipelineSvc:
+  replicas: 1
+  image:
+    repository: ""
+    tag: ""
+  port: 8002
+  env:
+    PIPELINE_AIRBYTE_URL: http://airbyte:8000
+    PIPELINE_PREFECT_URL: http://prefect:4200
+    PIPELINE_SPARK_URL: http://spark-master:8080
+    PIPELINE_REDIS_URL: redis://redis:6379/0
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+servingSvc:
+  replicas: 1
+  image:
+    repository: ""
+    tag: ""
+  port: 8003
+  env:
+    SERVING_PROMETHEUS_URL: http://prometheus:9090
+    SERVING_REDIS_URL: redis://redis:6379/0
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+mlopsSvc:
+  replicas: 1
+  image:
+    repository: ""
+    tag: ""
+  port: 8004
+  env:
+    MLOPS_MLFLOW_URL: http://mlflow:5000
+    MLOPS_AIRFLOW_URL: http://airflow:8080
+    MLOPS_REDIS_URL: redis://redis:6379/0
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/auth-url: "https://oauth2-proxy.mlops.company.com/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://oauth2-proxy.mlops.company.com/oauth2/start?rd=$scheme://$host$request_uri"
+  tls:
+    enabled: true
+    secretName: mlops-tls
+
+serviceAccount:
+  create: true
+  name: mlops-platform
+  annotations: {}

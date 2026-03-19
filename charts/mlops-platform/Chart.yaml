@@ -1,0 +1,9 @@
+apiVersion: v2
+name: mlops-platform
+description: Integrated MLOps Platform Dashboard – API Gateway, Monitoring, Pipeline, Serving, MLOps, and Frontend
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+maintainers:
+  - name: MLOps Team
+    email: mlops@company.com

@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: serving-svc
+  labels:
+    {{- include "mlops-platform.labels" . | nindent 4 }}
+    {{- include "mlops-platform.selectorLabels" (dict "component" "serving-svc") | nindent 4 }}
+spec:
+  replicas: {{ .Values.servingSvc.replicas }}
+  selector:
+    matchLabels:
+      {{- include "mlops-platform.selectorLabels" (dict "component" "serving-svc") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "mlops-platform.labels" . | nindent 8 }}
+        {{- include "mlops-platform.selectorLabels" (dict "component" "serving-svc") | nindent 8 }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range . }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: serving-svc
+          image: {{ include "mlops-platform.image" (dict "svc" .Values.servingSvc "global" .Values.global "name" "serving-svc") }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.servingSvc.port }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: serving-svc-config
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.servingSvc.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.servingSvc.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.servingSvc.resources | nindent 12 }}
