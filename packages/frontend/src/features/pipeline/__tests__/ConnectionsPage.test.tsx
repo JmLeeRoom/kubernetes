@@ -32,4 +32,27 @@ describe('ConnectionsPage', () => {
       expect(syncButtons.length).toBeGreaterThanOrEqual(0);
     });
   });
+
+  it('shows connection count', async () => {
+    renderWithProviders(<ConnectionsPage />);
+    await waitFor(() => {
+      expect(screen.getByText(/\d+ Airbyte connections/)).toBeInTheDocument();
+    });
+  });
+
+  it('shows sync history when connection is selected', async () => {
+    renderWithProviders(<ConnectionsPage />);
+    await waitFor(() => {
+      const cards = screen.getAllByText(/to-/);
+      expect(cards.length).toBeGreaterThan(0);
+    });
+
+    // Click first connection card
+    const cards = screen.getAllByText(/to-/);
+    cards[0].closest('button')?.click() ?? cards[0].click();
+
+    await waitFor(() => {
+      expect(screen.getByText('Sync History')).toBeInTheDocument();
+    });
+  });
 });

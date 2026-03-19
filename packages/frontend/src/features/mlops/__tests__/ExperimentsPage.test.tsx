@@ -20,4 +20,16 @@ describe('ExperimentsPage', () => {
     renderWithProviders(<ExperimentsPage />);
     expect(screen.getByText('Runs')).toBeInTheDocument();
   });
+
+  it('shows runs when an experiment is selected', async () => {
+    renderWithProviders(<ExperimentsPage />);
+    await waitFor(() => {
+      expect(screen.getByText('fraud-detection-v3')).toBeInTheDocument();
+    });
+    screen.getByText('fraud-detection-v3').click();
+    await waitFor(() => {
+      const checkboxes = screen.queryAllByRole('checkbox');
+      expect(checkboxes.length).toBeGreaterThan(0);
+    });
+  });
 });

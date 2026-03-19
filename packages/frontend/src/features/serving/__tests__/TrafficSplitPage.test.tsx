@@ -25,4 +25,24 @@ describe('TrafficSplitPage', () => {
       screen.getByText('Select a model to configure traffic split')
     ).toBeInTheDocument();
   });
+
+  it('shows traffic slider when a model is selected', async () => {
+    renderWithProviders(<TrafficSplitPage />);
+    await waitFor(() => {
+      expect(screen.getAllByText(/fraud-detector|recommendation-v2|sentiment-model|churn-predictor/).length).toBeGreaterThan(0);
+    });
+
+    const firstModel = screen.getAllByText(/fraud-detector|recommendation-v2|sentiment-model|churn-predictor/)[0];
+    firstModel.click();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Traffic:/)).toBeInTheDocument();
+      expect(screen.getByText('Performance')).toBeInTheDocument();
+    });
+  });
+
+  it('shows Models heading', () => {
+    renderWithProviders(<TrafficSplitPage />);
+    expect(screen.getByText('Models')).toBeInTheDocument();
+  });
 });

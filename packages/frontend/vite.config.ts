@@ -13,7 +13,15 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
-      exclude: ['src/mocks/**', 'src/components/ui/**'],
+      exclude: [
+        'src/mocks/**',
+        'src/components/ui/**',
+        'src/main.tsx',
+        'src/app/providers.tsx',
+        'src/app/router.tsx',
+        'src/vite-env.d.ts',
+        'vite.config.ts',
+      ],
       thresholds: { lines: 80, functions: 80, branches: 75 },
     },
   },

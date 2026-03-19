@@ -33,4 +33,25 @@ describe('InferenceServicesPage', () => {
     renderWithProviders(<InferenceServicesPage />);
     expect(screen.getByText('Deploy New Model')).toBeInTheDocument();
   });
+
+  it('shows deployed models count', async () => {
+    renderWithProviders(<InferenceServicesPage />);
+    await waitFor(() => {
+      expect(screen.getByText(/\d+ deployed models/)).toBeInTheDocument();
+    });
+  });
+
+  it('shows metrics section when a service card is clicked', async () => {
+    renderWithProviders(<InferenceServicesPage />);
+    await waitFor(() => {
+      expect(screen.getAllByText(/fraud-detector|recommendation-v2|sentiment-model|churn-predictor/).length).toBeGreaterThan(0);
+    });
+
+    const firstCard = screen.getAllByText(/fraud-detector|recommendation-v2|sentiment-model|churn-predictor/)[0];
+    firstCard.click();
+
+    await waitFor(() => {
+      expect(screen.getByText(/Metrics:/)).toBeInTheDocument();
+    });
+  });
 });
