@@ -22,4 +22,4 @@ ARG SERVICE=monitoring_svc
 ENV SERVICE=${SERVICE}
 
 EXPOSE 8000
-CMD uvicorn ${SERVICE}.main:app --host 0.0.0.0 --port 8000 --workers 2
+CMD ["sh", "-c", "uvicorn ${SERVICE}.main:app --host 0.0.0.0 --port 8000 --workers 2"]

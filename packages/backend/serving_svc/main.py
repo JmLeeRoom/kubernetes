@@ -32,7 +32,18 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Serving Service",
         version=settings.version,
+        description=(
+            "Model serving management service for the MLOps Platform.\n\n"
+            "Manages KServe InferenceService CRDs on Kubernetes:\n"
+            "- **CRUD**: Create, list, get, and delete inference services\n"
+            "- **Traffic**: Canary rollout with configurable traffic split\n"
+            "- **Metrics**: RPS and P99 latency from Prometheus\n\n"
+            "Supported frameworks: `sklearn`, `pytorch`, `tensorflow`, `onnx`, `xgboost`, `triton`"
+        ),
         lifespan=lifespan,
+        openapi_tags=[
+            {"name": "inference", "description": "KServe InferenceService CRUD, traffic management, and metrics"},
+        ],
     )
 
     app.add_middleware(

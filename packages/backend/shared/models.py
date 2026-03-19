@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -18,7 +19,7 @@ class ErrorResponse(BaseModel):
 
 
 class PaginatedResponse(BaseModel):
-    items: list
+    items: list[Any]
     total: int
     page: int = 1
     page_size: int = 50

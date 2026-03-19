@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -29,6 +27,10 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int = 900
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
 
 
 class UserInfo(BaseModel):
@@ -66,20 +68,23 @@ async def login(body: LoginRequest) -> TokenResponse:
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh(body: dict) -> TokenResponse:
+async def refresh(body: RefreshRequest) -> TokenResponse:
     """Exchange a refresh token for new access + refresh tokens."""
-    async with httpx.AsyncClient(timeout=settings.proxy_timeout) as client:
-        resp = await client.post(
-            _TOKEN_URL,
-            data={
-                "grant_type": "refresh_token",
-                "client_id": settings.auth_client_id,
-                "client_secret": settings.auth_client_secret,
-                "refresh_token": body.get("refreshToken", ""),
-            },
-        )
-        resp.raise_for_status()
-        data = resp.json()
+    try:
+        async with httpx.AsyncClient(timeout=settings.proxy_timeout) as client:
+            resp = await client.post(
+                _TOKEN_URL,
+                data={
+                    "grant_type": "refresh_token",
+                    "client_id": settings.auth_client_id,
+                    "client_secret": settings.auth_client_secret,
+                    "refresh_token": body.refresh_token,
+                },
+            )
+            resp.raise_for_status()
+            data = resp.json()
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=exc.response.status_code, detail="Token refresh failed")
     return TokenResponse(
         access_token=data["access_token"],
         refresh_token=data["refresh_token"],

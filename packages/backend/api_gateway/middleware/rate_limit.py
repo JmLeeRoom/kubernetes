@@ -26,9 +26,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         try:
             redis = get_redis()
-            count = await redis.incr(key)
-            if count == 1:
-                await redis.expire(key, self.window)
+            async with redis.pipeline() as pipe:
+                pipe.incr(key)
+                pipe.expire(key, self.window)
+                results = await pipe.execute()
+            count = results[0]
             if count > self.max_requests:
                 logger.warning("rate_limit_exceeded", client=client_ip, count=count)
                 return JSONResponse(

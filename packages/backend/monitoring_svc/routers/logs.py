@@ -36,8 +36,11 @@ async def stream_logs(ws: WebSocket, query: str = "") -> None:
     loki = _loki()
     try:
         while True:
-            data = await loki.query(query, limit=50)
-            await ws.send_text(json.dumps(data))
+            try:
+                data = await loki.query(query, limit=50)
+                await ws.send_text(json.dumps(data))
+            except Exception as exc:
+                await ws.send_text(json.dumps({"error": str(exc)}))
             await asyncio.sleep(2)
     except WebSocketDisconnect:
         pass

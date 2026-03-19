@@ -32,7 +32,23 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Monitoring Service",
         version=settings.version,
+        description=(
+            "Observability service for the MLOps Platform.\n\n"
+            "Provides unified access to:\n"
+            "- **Metrics**: PromQL queries and SSE streaming from Prometheus\n"
+            "- **Logs**: LogQL queries and WebSocket tailing from Loki\n"
+            "- **Traces**: Distributed trace search from Tempo\n"
+            "- **Kubernetes**: Node/pod status and event streaming\n"
+            "- **Alerts**: Active alert listing and Alertmanager silence management"
+        ),
         lifespan=lifespan,
+        openapi_tags=[
+            {"name": "metrics", "description": "Prometheus PromQL queries and real-time streaming"},
+            {"name": "logs", "description": "Loki LogQL queries and WebSocket log tailing"},
+            {"name": "traces", "description": "Tempo distributed trace search and retrieval"},
+            {"name": "k8s", "description": "Kubernetes node, pod, and event monitoring"},
+            {"name": "alerts", "description": "Prometheus alert listing and Alertmanager silencing"},
+        ],
     )
 
     app.add_middleware(

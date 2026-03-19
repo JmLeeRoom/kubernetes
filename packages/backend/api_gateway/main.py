@@ -37,7 +37,25 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="MLOps Platform API Gateway",
         version=settings.version,
+        description=(
+            "Single entry point for the MLOps Platform.\n\n"
+            "Handles JWT authentication (Keycloak), rate limiting, "
+            "structured logging, and reverse proxying to downstream services:\n"
+            "- **Monitoring** (Prometheus, Loki, Tempo, K8s)\n"
+            "- **Pipeline** (Airbyte, Prefect, Spark)\n"
+            "- **Serving** (KServe inference services)\n"
+            "- **MLOps** (MLflow experiments, Airflow DAGs)\n\n"
+            "All `/api/v1/{service}/*` routes require a valid JWT in the "
+            "`Authorization: Bearer <token>` header."
+        ),
         lifespan=lifespan,
+        openapi_tags=[
+            {"name": "auth", "description": "Login, token refresh, and user info"},
+            {"name": "monitoring", "description": "Proxy to Monitoring service (Prometheus, Loki, Tempo, K8s)"},
+            {"name": "pipeline", "description": "Proxy to Pipeline service (Airbyte, Prefect, Spark)"},
+            {"name": "serving", "description": "Proxy to Serving service (KServe)"},
+            {"name": "mlops", "description": "Proxy to MLOps service (MLflow, Airflow)"},
+        ],
     )
 
     app.add_middleware(

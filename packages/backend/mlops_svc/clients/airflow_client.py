@@ -7,6 +7,8 @@ import httpx
 import structlog
 from pydantic import BaseModel
 
+from shared.exceptions import UpstreamError
+
 logger = structlog.get_logger(__name__)
 
 
@@ -48,23 +50,32 @@ class AirflowClient:
         )
 
     async def list_dags(self) -> list[DAG]:
-        resp = await self._client.get("/api/v1/dags", params={"limit": 100})
-        resp.raise_for_status()
+        try:
+            resp = await self._client.get("/api/v1/dags", params={"limit": 100})
+            resp.raise_for_status()
+        except httpx.HTTPError as exc:
+            raise UpstreamError("airflow", str(exc)) from exc
         return [DAG(**d) for d in resp.json().get("dags", [])]
 
     async def trigger_dag(
         self, dag_id: str, conf: dict[str, Any] | None = None
     ) -> dict[str, Any]:
-        resp = await self._client.post(
-            f"/api/v1/dags/{dag_id}/dagRuns",
-            json={"conf": conf or {}},
-        )
-        resp.raise_for_status()
+        try:
+            resp = await self._client.post(
+                f"/api/v1/dags/{dag_id}/dagRuns",
+                json={"conf": conf or {}},
+            )
+            resp.raise_for_status()
+        except httpx.HTTPError as exc:
+            raise UpstreamError("airflow", str(exc)) from exc
         return resp.json()
 
     async def get_dag_tasks(self, dag_id: str) -> list[dict[str, Any]]:
-        resp = await self._client.get(f"/api/v1/dags/{dag_id}/tasks")
-        resp.raise_for_status()
+        try:
+            resp = await self._client.get(f"/api/v1/dags/{dag_id}/tasks")
+            resp.raise_for_status()
+        except httpx.HTTPError as exc:
+            raise UpstreamError("airflow", str(exc)) from exc
         tasks = resp.json().get("tasks", [])
         return [
             {
@@ -78,19 +89,25 @@ class AirflowClient:
     async def set_dag_paused(
         self, dag_id: str, is_paused: bool
     ) -> dict[str, Any]:
-        resp = await self._client.patch(
-            f"/api/v1/dags/{dag_id}",
-            json={"is_paused": is_paused},
-        )
-        resp.raise_for_status()
+        try:
+            resp = await self._client.patch(
+                f"/api/v1/dags/{dag_id}",
+                json={"is_paused": is_paused},
+            )
+            resp.raise_for_status()
+        except httpx.HTTPError as exc:
+            raise UpstreamError("airflow", str(exc)) from exc
         return resp.json()
 
     async def list_dag_runs(self, dag_id: str) -> list[DAGRun]:
-        resp = await self._client.get(
-            f"/api/v1/dags/{dag_id}/dagRuns",
-            params={"limit": 25, "order_by": "-execution_date"},
-        )
-        resp.raise_for_status()
+        try:
+            resp = await self._client.get(
+                f"/api/v1/dags/{dag_id}/dagRuns",
+                params={"limit": 25, "order_by": "-execution_date"},
+            )
+            resp.raise_for_status()
+        except httpx.HTTPError as exc:
+            raise UpstreamError("airflow", str(exc)) from exc
         return [DAGRun(**r) for r in resp.json().get("dag_runs", [])]
 
     async def close(self) -> None:

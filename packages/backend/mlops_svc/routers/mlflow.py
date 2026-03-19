@@ -30,8 +30,6 @@ async def list_experiments() -> list[dict[str, Any]]:
     try:
         experiments = await client.list_experiments()
         return [e.model_dump() for e in experiments]
-    except Exception as exc:
-        raise UpstreamError("mlflow", str(exc)) from exc
     finally:
         await client.close()
 
@@ -42,8 +40,6 @@ async def list_runs(experiment_id: str, max_results: int = 100) -> list[dict[str
     try:
         runs = await client.list_runs([experiment_id], max_results=max_results)
         return [r.model_dump() for r in runs]
-    except Exception as exc:
-        raise UpstreamError("mlflow", str(exc)) from exc
     finally:
         await client.close()
 
@@ -56,8 +52,6 @@ async def compare_runs(body: CompareRequest) -> list[dict[str, Any]]:
     try:
         runs = await client.compare_runs(body.run_ids)
         return [r.model_dump() for r in runs]
-    except Exception as exc:
-        raise UpstreamError("mlflow", str(exc)) from exc
     finally:
         await client.close()
 
@@ -68,8 +62,6 @@ async def list_models() -> list[dict[str, Any]]:
     try:
         models = await client.list_registered_models()
         return [m.model_dump() for m in models]
-    except Exception as exc:
-        raise UpstreamError("mlflow", str(exc)) from exc
     finally:
         await client.close()
 
@@ -80,8 +72,6 @@ async def get_model_versions(name: str) -> list[dict[str, Any]]:
     try:
         versions = await client.get_model_versions(name)
         return [v.model_dump() for v in versions]
-    except Exception as exc:
-        raise UpstreamError("mlflow", str(exc)) from exc
     finally:
         await client.close()
 
@@ -94,7 +84,5 @@ async def transition_stage(
     try:
         mv = await client.transition_model_stage(name, version, body.stage)
         return mv.model_dump()
-    except Exception as exc:
-        raise UpstreamError("mlflow", str(exc)) from exc
     finally:
         await client.close()

@@ -32,7 +32,19 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="MLOps Service",
         version=settings.version,
+        description=(
+            "ML experiment tracking and workflow orchestration service.\n\n"
+            "Integrates with:\n"
+            "- **MLflow**: Experiment listing, run comparison, model registry, and stage transitions\n"
+            "- **Airflow**: DAG listing, triggering, pause/unpause, task graph, and run history\n"
+            "- **Lineage**: Artifact provenance tracing across experiments"
+        ),
         lifespan=lifespan,
+        openapi_tags=[
+            {"name": "mlflow", "description": "MLflow experiments, runs, model registry, and stage transitions"},
+            {"name": "airflow", "description": "Airflow DAG management, triggering, and run history"},
+            {"name": "lineage", "description": "Data lineage and artifact provenance tracking"},
+        ],
     )
 
     app.add_middleware(

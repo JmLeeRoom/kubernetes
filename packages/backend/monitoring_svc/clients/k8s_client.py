@@ -70,7 +70,8 @@ class K8sClient:
                 event_queue.put(None)
                 w.stop()
 
-        task = asyncio.get_event_loop().run_in_executor(None, _stream)
+        loop = asyncio.get_running_loop()
+        task = loop.run_in_executor(None, _stream)
         try:
             while True:
                 try:
@@ -82,7 +83,8 @@ class K8sClient:
                     break
                 yield item
         finally:
-            task.cancel() if hasattr(task, "cancel") else None
+            if not task.done():
+                task.cancel()
 
     @staticmethod
     def _node_summary(node: Any) -> dict[str, Any]:

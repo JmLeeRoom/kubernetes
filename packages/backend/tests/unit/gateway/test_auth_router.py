@@ -69,7 +69,7 @@ async def test_refresh_token(gateway_client, mock_redis):
 
     resp = await gateway_client.post(
         "/api/v1/auth/refresh",
-        json={"refreshToken": "old-refresh"},
+        json={"refresh_token": "old-refresh"},
     )
     assert resp.status_code == 200
     data = resp.json()

@@ -26,25 +26,12 @@ class SparkClient:
         return await self._get(path)
 
     async def get_job(self, app_id: str, job_id: int) -> dict[str, Any]:
-        resp = await self._get_raw(f"/api/v1/applications/{app_id}/jobs/{job_id}")
-        return resp
+        return await self._get(f"/api/v1/applications/{app_id}/jobs/{job_id}")
 
     async def list_stages(self, app_id: str) -> list[dict[str, Any]]:
         return await self._get(f"/api/v1/applications/{app_id}/stages")
 
-    async def _get(self, path: str) -> list[dict[str, Any]]:
-        try:
-            resp = await self._client.get(path)
-            resp.raise_for_status()
-            return resp.json()
-        except httpx.HTTPStatusError as exc:
-            logger.error("spark_http_error", status=exc.response.status_code, path=path)
-            raise UpstreamError("spark", str(exc)) from exc
-        except httpx.RequestError as exc:
-            logger.error("spark_request_error", error=str(exc))
-            raise UpstreamError("spark", str(exc)) from exc
-
-    async def _get_raw(self, path: str) -> dict[str, Any]:
+    async def _get(self, path: str) -> Any:
         try:
             resp = await self._client.get(path)
             resp.raise_for_status()

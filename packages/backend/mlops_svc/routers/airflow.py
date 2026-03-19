@@ -7,7 +7,6 @@ from pydantic import BaseModel
 
 from mlops_svc.clients.airflow_client import AirflowClient
 from mlops_svc.config import settings
-from shared.exceptions import UpstreamError
 
 router = APIRouter()
 
@@ -34,8 +33,6 @@ async def list_dags() -> list[dict[str, Any]]:
     try:
         dags = await client.list_dags()
         return [d.model_dump(mode="json") for d in dags]
-    except Exception as exc:
-        raise UpstreamError("airflow", str(exc)) from exc
     finally:
         await client.close()
 
@@ -45,8 +42,6 @@ async def trigger_dag(dag_id: str, body: TriggerRequest) -> dict[str, Any]:
     client = _airflow()
     try:
         return await client.trigger_dag(dag_id, conf=body.conf)
-    except Exception as exc:
-        raise UpstreamError("airflow", str(exc)) from exc
     finally:
         await client.close()
 
@@ -57,8 +52,6 @@ async def get_dag_graph(dag_id: str) -> dict[str, Any]:
     try:
         tasks = await client.get_dag_tasks(dag_id)
         return {"dag_id": dag_id, "tasks": tasks}
-    except Exception as exc:
-        raise UpstreamError("airflow", str(exc)) from exc
     finally:
         await client.close()
 
@@ -68,8 +61,6 @@ async def toggle_pause(dag_id: str, body: PauseRequest) -> dict[str, Any]:
     client = _airflow()
     try:
         return await client.set_dag_paused(dag_id, body.is_paused)
-    except Exception as exc:
-        raise UpstreamError("airflow", str(exc)) from exc
     finally:
         await client.close()
 
@@ -80,7 +71,5 @@ async def list_dag_runs(dag_id: str) -> list[dict[str, Any]]:
     try:
         runs = await client.list_dag_runs(dag_id)
         return [r.model_dump(mode="json") for r in runs]
-    except Exception as exc:
-        raise UpstreamError("airflow", str(exc)) from exc
     finally:
         await client.close()

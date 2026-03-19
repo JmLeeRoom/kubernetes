@@ -32,7 +32,19 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="Pipeline Service",
         version=settings.version,
+        description=(
+            "Data pipeline management service for the MLOps Platform.\n\n"
+            "Integrates with:\n"
+            "- **Airbyte**: Data connection management and sync triggering\n"
+            "- **Prefect**: Flow orchestration and run management\n"
+            "- **Spark**: Job and stage monitoring"
+        ),
         lifespan=lifespan,
+        openapi_tags=[
+            {"name": "airbyte", "description": "Airbyte data connections, sync triggers, and job history"},
+            {"name": "prefect", "description": "Prefect flow listing, run history, and cancellation"},
+            {"name": "spark", "description": "Spark application, job, and stage monitoring"},
+        ],
     )
 
     app.add_middleware(

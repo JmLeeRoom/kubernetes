@@ -74,6 +74,15 @@ def mock_redis():
     mock.ping = AsyncMock()
     mock.incr = AsyncMock(return_value=1)
     mock.expire = AsyncMock()
+
+    pipe_mock = AsyncMock()
+    pipe_mock.incr = lambda *a, **kw: pipe_mock
+    pipe_mock.expire = lambda *a, **kw: pipe_mock
+    pipe_mock.execute = AsyncMock(return_value=[1, True])
+    pipe_mock.__aenter__ = AsyncMock(return_value=pipe_mock)
+    pipe_mock.__aexit__ = AsyncMock(return_value=False)
+    mock.pipeline = lambda: pipe_mock
+
     with patch("shared.cache._redis", mock):
         yield mock
 
