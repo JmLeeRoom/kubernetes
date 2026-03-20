@@ -22,7 +22,7 @@ export function useTraceSearch({
   return useQuery<TraceSearchResult>({
     queryKey: ['traces', 'search', serviceName, operation, minDuration, maxDuration, limit],
     queryFn: async () => {
-      const { data } = await api.get('/traces/search', {
+      const { data } = await api.get('/monitoring/traces/search', {
         params: {
           service_name: serviceName,
           operation,
@@ -42,7 +42,7 @@ export function useTrace(traceId: string | undefined) {
   return useQuery<TraceDetail>({
     queryKey: ['traces', traceId],
     queryFn: async () => {
-      const { data } = await api.get(`/traces/${traceId}`);
+      const { data } = await api.get(`/monitoring/traces/${traceId}`);
       return data;
     },
     enabled: !!traceId,

@@ -1,14 +1,21 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLogs } from '../api';
 import { LogViewer } from '../components/LogViewer';
 import { TimeRangePicker, rangeToEpoch } from '../components/TimeRangePicker';
-import type { TimeRange } from '../types';
+import { useWebSocket } from '@/hooks/useWebSocket';
+import type { LogStreamMessage, TimeRange } from '../types';
+
+function buildWsUrl(query: string): string {
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${proto}//${window.location.host}/api/v1/monitoring/logs/stream?query=${encodeURIComponent(query)}`;
+}
 
 export default function LogViewerPage() {
   const [logql, setLogql] = useState('');
   const [submitted, setSubmitted] = useState('');
   const [range, setRange] = useState<TimeRange>('1h');
   const [limit, setLimit] = useState(500);
+  const [streaming, setStreaming] = useState(false);
 
   const { start, end } = rangeToEpoch(range);
   const { data, isLoading, error } = useLogs({
@@ -16,8 +23,17 @@ export default function LogViewerPage() {
     start,
     end,
     limit,
-    enabled: !!submitted,
+    enabled: !!submitted && !streaming,
   });
+
+  const wsUrl = useMemo(
+    () => (streaming && submitted ? buildWsUrl(submitted) : null),
+    [streaming, submitted]
+  );
+  const { messages: streamMessages, status: wsStatus } = useWebSocket<LogStreamMessage>(wsUrl);
+
+  const latestStreamData = streamMessages.length > 0 ? streamMessages[streamMessages.length - 1] : null;
+  const viewerData = streaming && latestStreamData?.data ? { status: 'success', data: latestStreamData.data } : data;
 
   return (
     <div className="space-y-6">
@@ -59,16 +75,27 @@ export default function LogViewerPage() {
             <option value={1000}>1000</option>
             <option value={5000}>5000</option>
           </select>
+          <button
+            onClick={() => setStreaming((v) => !v)}
+            disabled={!submitted}
+            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-40 ${
+              streaming
+                ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                : 'bg-muted text-muted-foreground hover:bg-accent'
+            }`}
+          >
+            {streaming ? `Tail (${wsStatus})` : 'Tail'}
+          </button>
         </div>
       </div>
 
-      {error && (
+      {error && !streaming && (
         <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-400">
           {(error as Error).message}
         </div>
       )}
 
-      <LogViewer data={data} isLoading={isLoading} />
+      <LogViewer data={viewerData} isLoading={isLoading && !streaming} />
     </div>
   );
 }

@@ -92,4 +92,29 @@ export interface Alert {
   value: string | null;
 }
 
+export interface K8sEvent {
+  type: string;
+  reason: string;
+  message: string;
+  involvedObject: {
+    kind: string;
+    name: string;
+    namespace: string;
+  };
+  firstTimestamp: string;
+  lastTimestamp: string;
+}
+
+export interface LogStreamMessage {
+  status?: string;
+  data?: {
+    resultType: string;
+    result: Array<{
+      stream: Record<string, string>;
+      values: [string, string][];
+    }>;
+  };
+  error?: string;
+}
+
 export type TimeRange = '15m' | '1h' | '6h' | '24h' | '7d';

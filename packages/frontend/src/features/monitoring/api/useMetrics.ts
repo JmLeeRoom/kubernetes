@@ -14,7 +14,7 @@ export function useMetricsRange({ query, start, end, step = '15s', enabled = tru
   return useQuery<MetricsRangeResult>({
     queryKey: ['metrics', 'range', query, start, end, step],
     queryFn: async () => {
-      const { data } = await api.get('/metrics/query_range', {
+      const { data } = await api.get('/monitoring/metrics/query_range', {
         params: { query, start, end, step },
       });
       return data;

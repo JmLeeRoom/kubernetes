@@ -14,29 +14,50 @@ logger = structlog.get_logger(__name__)
 class K8sClient:
     def __init__(self, *, in_cluster: bool = False, namespace: str = "default") -> None:
         self._namespace = namespace
+        self._available = False
         if in_cluster:
             config.load_incluster_config()
+            self._available = True
         else:
             try:
                 config.load_kube_config()
+                self._available = True
             except config.ConfigException:
                 logger.warning("k8s_config_not_found", msg="running without k8s access")
-        self._core = client.CoreV1Api()
+        if self._available:
+            self._core = client.CoreV1Api()
+
+    @property
+    def available(self) -> bool:
+        """Whether K8s API is reachable."""
+        return self._available
 
     def list_nodes(self) -> list[dict[str, Any]]:
+        if not self._available:
+            return []
         try:
             nodes = self._core.list_node()
             return [self._node_summary(n) for n in nodes.items]
         except ApiException as exc:
-            raise UpstreamError("kubernetes", str(exc)) from exc
+            logger.error("k8s_list_nodes_failed", error=str(exc))
+            return []
+        except Exception as exc:
+            logger.error("k8s_list_nodes_unexpected", error=str(exc))
+            return []
 
     def list_pods(self, namespace: str | None = None) -> list[dict[str, Any]]:
+        if not self._available:
+            return []
         ns = namespace or self._namespace
         try:
             pods = self._core.list_namespaced_pod(namespace=ns)
             return [self._pod_summary(p) for p in pods.items]
         except ApiException as exc:
-            raise UpstreamError("kubernetes", str(exc)) from exc
+            logger.error("k8s_list_pods_failed", error=str(exc))
+            return []
+        except Exception as exc:
+            logger.error("k8s_list_pods_unexpected", error=str(exc))
+            return []
 
     async def watch_events(self, namespace: str | None = None) -> AsyncIterator[dict[str, Any]]:
         """Yield K8s events as dicts. Used by SSE endpoint.
@@ -45,6 +66,9 @@ class K8sClient:
         blocking iterator in a thread via ``asyncio.to_thread`` and
         yield results back to the async caller.
         """
+        if not self._available:
+            return
+
         import asyncio
         import queue
         from kubernetes import watch as k8s_watch

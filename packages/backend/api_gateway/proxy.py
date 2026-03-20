@@ -34,6 +34,7 @@ async def forward(
                 params=params,
                 headers=headers,
                 content=body if body else None,
+                follow_redirects=True,
             )
     except (httpx.ConnectError, httpx.TimeoutException) as exc:
         return JSONResponse(

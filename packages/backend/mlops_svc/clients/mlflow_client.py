@@ -55,7 +55,10 @@ class MLflowClient:
 
     async def list_experiments(self) -> list[Experiment]:
         try:
-            resp = await self._client.get("/api/2.0/mlflow/experiments/list")
+            resp = await self._client.post(
+                "/api/2.0/mlflow/experiments/search",
+                json={"max_results": 200},
+            )
             resp.raise_for_status()
         except httpx.HTTPError as exc:
             raise UpstreamError("mlflow", str(exc)) from exc
@@ -130,7 +133,8 @@ class MLflowClient:
     async def list_registered_models(self) -> list[RegisteredModel]:
         try:
             resp = await self._client.get(
-                "/api/2.0/mlflow/registered-models/list"
+                "/api/2.0/mlflow/registered-models/search",
+                params={"max_results": 200},
             )
             resp.raise_for_status()
         except httpx.HTTPError as exc:

@@ -17,7 +17,7 @@ class DAG(BaseModel):
     description: str | None = None
     is_paused: bool
     is_active: bool
-    schedule_interval: str | None = None
+    schedule_interval: str | dict | None = None
     next_dagrun: datetime | None = None
 
 

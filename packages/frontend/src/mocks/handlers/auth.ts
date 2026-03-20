@@ -2,15 +2,18 @@ import { http, HttpResponse } from 'msw';
 
 export const authHandlers = [
   http.post('/api/v1/auth/login', async ({ request }) => {
-    const body = (await request.json()) as { email: string; password: string };
+    const body = (await request.json()) as { email?: string; username?: string; password: string };
+    const loginId = body.email || body.username;
 
-    if (body.email && body.password) {
+    if (loginId && body.password) {
       return HttpResponse.json({
         access_token: 'mock-access-token-' + Date.now(),
         refresh_token: 'mock-refresh-token-' + Date.now(),
+        token_type: 'bearer',
+        expires_in: 900,
         user: {
           id: 'user-001',
-          email: body.email,
+          email: loginId,
           name: 'Admin User',
           groups: ['admin'],
         },
@@ -24,6 +27,8 @@ export const authHandlers = [
     return HttpResponse.json({
       access_token: 'mock-access-token-refreshed-' + Date.now(),
       refresh_token: 'mock-refresh-token-refreshed-' + Date.now(),
+      token_type: 'bearer',
+      expires_in: 900,
     });
   }),
 ];

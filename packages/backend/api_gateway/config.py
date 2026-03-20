@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     auth_realm: str = "mlops-platform"
     auth_client_id: str = "mlops-dashboard"
     auth_client_secret: str = ""
+    auth_verify_token: bool = True
 
     proxy_timeout: int = 30
 

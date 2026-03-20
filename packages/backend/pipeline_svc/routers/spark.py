@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import structlog
 from fastapi import APIRouter, Query
 
 from pipeline_svc.clients.spark import SparkClient
 from pipeline_svc.config import settings
+from shared.exceptions import UpstreamError
+
+logger = structlog.get_logger(__name__)
 
 router = APIRouter()
 
@@ -17,6 +21,9 @@ async def list_jobs(app_id: str | None = Query(None)) -> list[dict]:
     client = _spark()
     try:
         return await client.list_jobs(app_id)
+    except UpstreamError:
+        logger.warning("spark_unavailable", msg="Spark not reachable, returning empty list")
+        return []
     finally:
         await client.close()
 
@@ -35,5 +42,8 @@ async def list_stages(app_id: str) -> list[dict]:
     client = _spark()
     try:
         return await client.list_stages(app_id)
+    except UpstreamError:
+        logger.warning("spark_stages_unavailable", msg="Spark not reachable, returning empty list")
+        return []
     finally:
         await client.close()

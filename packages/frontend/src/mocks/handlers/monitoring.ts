@@ -24,11 +24,15 @@ const generatePod = () => ({
 });
 
 export const monitoringHandlers = [
-  http.get('/api/v1/k8s/nodes', () => HttpResponse.json(Array.from({ length: 3 }, generateNode))),
+  http.get('/api/v1/monitoring/k8s/nodes', () =>
+    HttpResponse.json(Array.from({ length: 3 }, generateNode))
+  ),
 
-  http.get('/api/v1/k8s/pods', () => HttpResponse.json(Array.from({ length: 10 }, generatePod))),
+  http.get('/api/v1/monitoring/k8s/pods', () =>
+    HttpResponse.json(Array.from({ length: 10 }, generatePod))
+  ),
 
-  http.get('/api/v1/metrics/query_range', () =>
+  http.get('/api/v1/monitoring/metrics/query_range', () =>
     HttpResponse.json({
       resultType: 'matrix',
       result: [
@@ -43,7 +47,7 @@ export const monitoringHandlers = [
     })
   ),
 
-  http.get('/api/v1/alerts', () =>
+  http.get('/api/v1/monitoring/alerts', () =>
     HttpResponse.json([
       {
         alertname: 'HighCPUUsage',
@@ -62,11 +66,11 @@ export const monitoringHandlers = [
     ])
   ),
 
-  http.post('/api/v1/alerts/:id/silence', () =>
+  http.post('/api/v1/monitoring/alerts/:id/silence', () =>
     HttpResponse.json({ status: 'silenced', alert_id: 'test' })
   ),
 
-  http.get('/api/v1/logs/query', () =>
+  http.get('/api/v1/monitoring/logs/query', () =>
     HttpResponse.json({
       status: 'success',
       data: {
@@ -84,7 +88,7 @@ export const monitoringHandlers = [
     })
   ),
 
-  http.get('/api/v1/traces/search', () =>
+  http.get('/api/v1/monitoring/traces/search', () =>
     HttpResponse.json({
       traces: Array.from({ length: 5 }, () => ({
         traceID: faker.string.hexadecimal({ length: 32, prefix: '' }),
@@ -92,6 +96,25 @@ export const monitoringHandlers = [
         rootTraceName: faker.helpers.arrayElement(['GET /health', 'POST /predict']),
         durationMs: faker.number.int({ min: 5, max: 2000 }),
         startTimeUnixNano: Date.now() * 1e6,
+      })),
+    })
+  ),
+
+  http.get('/api/v1/monitoring/traces/:traceId', ({ params }) =>
+    HttpResponse.json({
+      traceID: params.traceId,
+      spans: Array.from({ length: 4 }, () => ({
+        spanID: faker.string.hexadecimal({ length: 16, prefix: '' }),
+        operationName: faker.helpers.arrayElement([
+          'HTTP GET',
+          'db.query',
+          'grpc.call',
+          'redis.get',
+        ]),
+        serviceName: faker.helpers.arrayElement(['api-gateway', 'serving-svc', 'monitoring-svc']),
+        durationMs: faker.number.int({ min: 1, max: 500 }),
+        startTime: Date.now() * 1e6,
+        tags: { 'http.status_code': '200' },
       })),
     })
   ),

@@ -6,7 +6,7 @@ export function useNodes() {
   return useQuery<K8sNode[]>({
     queryKey: ['k8s', 'nodes'],
     queryFn: async () => {
-      const { data } = await api.get('/k8s/nodes');
+      const { data } = await api.get('/monitoring/k8s/nodes');
       return data;
     },
     staleTime: 10_000,
@@ -18,7 +18,7 @@ export function usePods(namespace?: string) {
   return useQuery<K8sPod[]>({
     queryKey: ['k8s', 'pods', namespace],
     queryFn: async () => {
-      const { data } = await api.get('/k8s/pods', { params: { namespace } });
+      const { data } = await api.get('/monitoring/k8s/pods', { params: { namespace } });
       return data;
     },
     staleTime: 10_000,

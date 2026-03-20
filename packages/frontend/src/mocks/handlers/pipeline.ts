@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { faker } from '@faker-js/faker';
 
 export const pipelineHandlers = [
-  http.get('/api/v1/connections', () =>
+  http.get('/api/v1/pipeline/connections', () =>
     HttpResponse.json(
       Array.from({ length: 4 }, () => ({
         connectionId: faker.string.uuid(),
@@ -15,7 +15,7 @@ export const pipelineHandlers = [
     )
   ),
 
-  http.get('/api/v1/connections/:id/jobs', () =>
+  http.get('/api/v1/pipeline/connections/:id/jobs', () =>
     HttpResponse.json(
       Array.from({ length: 3 }, (_, i) => ({
         id: i + 1,
@@ -35,11 +35,11 @@ export const pipelineHandlers = [
     )
   ),
 
-  http.post('/api/v1/connections/:id/sync', () =>
+  http.post('/api/v1/pipeline/connections/:id/sync', () =>
     HttpResponse.json({ job: { id: 42, status: 'pending' } })
   ),
 
-  http.get('/api/v1/flows', () =>
+  http.get('/api/v1/pipeline/flows', () =>
     HttpResponse.json(
       Array.from({ length: 6 }, () => ({
         id: faker.string.uuid(),
@@ -57,7 +57,7 @@ export const pipelineHandlers = [
     )
   ),
 
-  http.get('/api/v1/flows/runs', () =>
+  http.get('/api/v1/pipeline/flows/runs', () =>
     HttpResponse.json(
       Array.from({ length: 10 }, () => ({
         id: faker.string.uuid(),
@@ -77,11 +77,11 @@ export const pipelineHandlers = [
     )
   ),
 
-  http.post('/api/v1/flows/runs/:id/cancel', () =>
+  http.post('/api/v1/pipeline/flows/runs/:id/cancel', () =>
     HttpResponse.json({ status: 'cancelling' })
   ),
 
-  http.get('/api/v1/spark/jobs', () =>
+  http.get('/api/v1/pipeline/spark/jobs', () =>
     HttpResponse.json(
       Array.from({ length: 5 }, () => ({
         jobId: faker.number.int({ min: 1, max: 100 }),

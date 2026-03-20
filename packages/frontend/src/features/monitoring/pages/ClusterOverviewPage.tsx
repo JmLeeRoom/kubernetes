@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { useNodes, usePods } from '../api';
 import { NodeStatusGrid } from '../components/NodeStatusGrid';
 import { PodStatusSummary } from '../components/PodStatusSummary';
 import { ResourceUsageGauge } from '../components/ResourceUsageGauge';
+import { useSSE } from '@/hooks/useSSE';
+import type { K8sEvent } from '../types';
 
 function parseResource(value: string): number {
   if (value.endsWith('m')) return parseInt(value) / 1000;
@@ -14,6 +17,15 @@ function parseResource(value: string): number {
 export default function ClusterOverviewPage() {
   const { data: nodes = [], isLoading: nodesLoading } = useNodes();
   const { data: pods = [], isLoading: podsLoading } = usePods();
+  const [eventsEnabled, setEventsEnabled] = useState(false);
+  const [events, setEvents] = useState<K8sEvent[]>([]);
+
+  const sseUrl = eventsEnabled ? '/api/v1/monitoring/k8s/events' : null;
+  useSSE<K8sEvent>(sseUrl, {
+    onMessage: (event) => {
+      setEvents((prev) => [event as K8sEvent, ...prev].slice(0, 100));
+    },
+  });
 
   const totalCpu = nodes.reduce((sum, n) => sum + parseResource(n.cpu_capacity), 0);
   const allocCpu = nodes.reduce((sum, n) => sum + parseResource(n.cpu_allocatable), 0);
@@ -51,6 +63,44 @@ export default function ClusterOverviewPage() {
       <div>
         <h2 className="mb-3 text-lg font-semibold">Nodes</h2>
         <NodeStatusGrid nodes={nodes} isLoading={nodesLoading} />
+      </div>
+
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Cluster Events</h2>
+          <button
+            onClick={() => {
+              setEventsEnabled((v) => !v);
+              if (eventsEnabled) setEvents([]);
+            }}
+            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+              eventsEnabled
+                ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                : 'bg-muted text-muted-foreground hover:bg-accent'
+            }`}
+          >
+            {eventsEnabled ? 'Streaming...' : 'Start Stream'}
+          </button>
+        </div>
+        {events.length > 0 ? (
+          <div className="max-h-64 space-y-1 overflow-y-auto rounded-lg border p-3">
+            {events.map((evt, i) => (
+              <div key={i} className="flex gap-2 text-xs">
+                <span className="shrink-0 text-muted-foreground">
+                  {evt.involvedObject?.kind}/{evt.involvedObject?.name}
+                </span>
+                <span className="font-medium">{evt.reason}</span>
+                <span className="truncate text-muted-foreground">{evt.message}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex h-24 items-center justify-center rounded-lg border border-dashed">
+            <p className="text-sm text-muted-foreground">
+              {eventsEnabled ? 'Waiting for events...' : 'Click "Start Stream" to watch cluster events'}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

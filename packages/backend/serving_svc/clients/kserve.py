@@ -34,11 +34,23 @@ class KServeClient:
     def __init__(self) -> None:
         from kubernetes import client, config
 
+        self._available = False
         try:
             config.load_incluster_config()
+            self._available = True
         except Exception:
-            config.load_kube_config()
-        self.api = client.CustomObjectsApi()
+            try:
+                config.load_kube_config()
+                self._available = True
+            except Exception:
+                logger.warning("kserve_k8s_not_available", msg="running without K8s access")
+        if self._available:
+            self.api = client.CustomObjectsApi()
+
+    @property
+    def available(self) -> bool:
+        """Whether K8s API is reachable for KServe operations."""
+        return self._available
 
     def _build_body(self, spec: InferenceServiceSpec) -> dict[str, Any]:
         predictor_config = {
@@ -70,7 +82,12 @@ class KServeClient:
             body["spec"]["canaryTrafficPercent"] = spec.canary_percent
         return body
 
+    def _check_available(self) -> None:
+        if not self._available:
+            raise RuntimeError("K8s cluster not available — KServe operations disabled")
+
     def create(self, spec: InferenceServiceSpec) -> dict[str, Any]:
+        self._check_available()
         logger.info("kserve_create", name=spec.name, framework=spec.framework)
         return self.api.create_namespaced_custom_object(
             group=KSERVE_GROUP,
@@ -81,6 +98,8 @@ class KServeClient:
         )
 
     def list(self, namespace: str = "model-serving") -> list[dict[str, Any]]:
+        if not self._available:
+            return []
         result = self.api.list_namespaced_custom_object(
             group=KSERVE_GROUP,
             version=KSERVE_VERSION,
@@ -90,6 +109,7 @@ class KServeClient:
         return result.get("items", [])
 
     def get(self, name: str, namespace: str = "model-serving") -> dict[str, Any]:
+        self._check_available()
         return self.api.get_namespaced_custom_object(
             group=KSERVE_GROUP,
             version=KSERVE_VERSION,
@@ -99,6 +119,7 @@ class KServeClient:
         )
 
     def delete(self, name: str, namespace: str = "model-serving") -> None:
+        self._check_available()
         logger.info("kserve_delete", name=name)
         self.api.delete_namespaced_custom_object(
             group=KSERVE_GROUP,
@@ -111,6 +132,7 @@ class KServeClient:
     def update_traffic(
         self, name: str, canary_percent: int, namespace: str = "model-serving"
     ) -> dict[str, Any]:
+        self._check_available()
         logger.info("kserve_update_traffic", name=name, canary=canary_percent)
         patch = {"spec": {"canaryTrafficPercent": canary_percent}}
         return self.api.patch_namespaced_custom_object(

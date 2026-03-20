@@ -20,7 +20,7 @@ describe('MetricsExplorerPage', () => {
 
   it('shows error state on API failure', async () => {
     server.use(
-      http.get('/api/v1/metrics/query_range', () =>
+      http.get('/api/v1/monitoring/metrics/query_range', () =>
         HttpResponse.json({ error: 'Service Unavailable' }, { status: 503 })
       )
     );

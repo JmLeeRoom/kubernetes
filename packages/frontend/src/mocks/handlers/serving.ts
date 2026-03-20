@@ -9,7 +9,7 @@ const MODEL_NAMES = [
 ];
 
 export const servingHandlers = [
-  http.get('/api/v1/inference-services', () =>
+  http.get('/api/v1/serving/inference-services', () =>
     HttpResponse.json(
       MODEL_NAMES.map((name) => ({
         name,
@@ -26,7 +26,7 @@ export const servingHandlers = [
     )
   ),
 
-  http.get('/api/v1/inference-services/:name', ({ params }) =>
+  http.get('/api/v1/serving/inference-services/:name', ({ params }) =>
     HttpResponse.json({
       name: params.name,
       namespace: 'model-serving',
@@ -38,7 +38,7 @@ export const servingHandlers = [
     })
   ),
 
-  http.post('/api/v1/inference-services', async ({ request }) => {
+  http.post('/api/v1/serving/inference-services', async ({ request }) => {
     const body = await request.json();
     return HttpResponse.json(
       { message: 'InferenceService created', name: (body as Record<string, string>).name, spec: body },
@@ -46,11 +46,11 @@ export const servingHandlers = [
     );
   }),
 
-  http.delete('/api/v1/inference-services/:name', () =>
+  http.delete('/api/v1/serving/inference-services/:name', () =>
     new HttpResponse(null, { status: 204 })
   ),
 
-  http.patch('/api/v1/inference-services/:name/traffic', async ({ params, request }) => {
+  http.patch('/api/v1/serving/inference-services/:name/traffic', async ({ params, request }) => {
     const body = (await request.json()) as Record<string, number>;
     return HttpResponse.json({
       name: params.name,
@@ -59,22 +59,13 @@ export const servingHandlers = [
     });
   }),
 
-  http.get('/api/v1/inference-services/:name/metrics', ({ params }) =>
+  http.get('/api/v1/serving/inference-services/:name/metrics', ({ params }) =>
     HttpResponse.json({
       name: params.name,
       metrics: {
         rps: faker.number.float({ min: 10, max: 500 }),
         latency_p99_ms: faker.number.int({ min: 20, max: 300 }),
       },
-    })
-  ),
-
-  http.get('/api/v1/canary/:name', ({ params }) =>
-    HttpResponse.json({
-      name: params.name,
-      canary_percent: faker.number.int({ min: 0, max: 50 }),
-      default_percent: faker.number.int({ min: 50, max: 100 }),
-      canary_ready: faker.datatype.boolean(),
     })
   ),
 ];

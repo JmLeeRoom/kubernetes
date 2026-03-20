@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useMetricsRange } from '../api';
 import { TimeSeriesChart } from '../components/TimeSeriesChart';
 import { TimeRangePicker, rangeToEpoch } from '../components/TimeRangePicker';
-import type { TimeRange } from '../types';
+import { useSSE } from '@/hooks/useSSE';
+import type { MetricsRangeResult, TimeRange } from '../types';
 
 export default function MetricsExplorerPage() {
   const [promql, setPromql] = useState('');
   const [submitted, setSubmitted] = useState('');
   const [range, setRange] = useState<TimeRange>('1h');
   const [step, setStep] = useState('15s');
+  const [liveMode, setLiveMode] = useState(false);
 
   const { start, end } = rangeToEpoch(range);
   const { data, isLoading, error } = useMetricsRange({
@@ -16,8 +18,19 @@ export default function MetricsExplorerPage() {
     start,
     end,
     step,
-    enabled: !!submitted,
+    enabled: !!submitted && !liveMode,
   });
+
+  const sseUrl = useMemo(
+    () =>
+      liveMode && submitted
+        ? `/api/v1/monitoring/metrics/stream?query=${encodeURIComponent(submitted)}&interval=5`
+        : null,
+    [liveMode, submitted]
+  );
+  const { data: liveData } = useSSE<MetricsRangeResult>(sseUrl);
+
+  const chartData = liveMode ? liveData : data;
 
   return (
     <div className="space-y-6">
@@ -59,18 +72,29 @@ export default function MetricsExplorerPage() {
             <option value="1m">1m</option>
             <option value="5m">5m</option>
           </select>
+          <button
+            onClick={() => setLiveMode((v) => !v)}
+            disabled={!submitted}
+            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-40 ${
+              liveMode
+                ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                : 'bg-muted text-muted-foreground hover:bg-accent'
+            }`}
+          >
+            {liveMode ? 'Live' : 'Static'}
+          </button>
         </div>
       </div>
 
-      {error && (
+      {error && !liveMode && (
         <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-400">
           {(error as Error).message}
         </div>
       )}
 
-      {isLoading && <div className="h-80 animate-pulse rounded-lg bg-muted" />}
+      {isLoading && !liveMode && <div className="h-80 animate-pulse rounded-lg bg-muted" />}
 
-      {data && <TimeSeriesChart series={data.result} height={400} />}
+      {chartData && <TimeSeriesChart series={chartData.result} height={400} />}
     </div>
   );
 }

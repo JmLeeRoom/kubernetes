@@ -8,7 +8,7 @@ export function useSparkJobs(appId?: string) {
     queryFn: async () => {
       const params: Record<string, string> = {};
       if (appId) params.app_id = appId;
-      const { data } = await api.get('/spark/jobs', { params });
+      const { data } = await api.get('/pipeline/spark/jobs', { params });
       return data;
     },
     staleTime: 10_000,

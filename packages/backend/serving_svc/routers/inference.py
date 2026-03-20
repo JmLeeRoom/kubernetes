@@ -71,6 +71,8 @@ def _extract_isvc(raw: dict[str, Any]) -> dict[str, Any]:
 @router.get("/")
 async def list_services() -> list[dict[str, Any]]:
     client = _kserve()
+    if not client.available:
+        return []
     try:
         items = client.list(settings.kserve_namespace)
         return [_extract_isvc(item) for item in items]

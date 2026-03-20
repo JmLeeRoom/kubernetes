@@ -2,9 +2,30 @@
 
 from __future__ import annotations
 
+import base64
+import json
+
 import pytest
 import respx
 import httpx
+
+
+def _make_mock_jwt(payload: dict) -> str:
+    """Build a structurally valid (but unsigned) JWT for testing."""
+    header = base64.urlsafe_b64encode(json.dumps({"alg": "none"}).encode()).rstrip(b"=")
+    body = base64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b"=")
+    return f"{header.decode()}.{body.decode()}.sig"
+
+
+_MOCK_JWT = _make_mock_jwt(
+    {
+        "sub": "user-001",
+        "email": "admin@company.com",
+        "name": "Admin User",
+        "preferred_username": "admin",
+        "groups": ["admin"],
+    }
+)
 
 
 @pytest.mark.asyncio
@@ -17,7 +38,7 @@ async def test_login_success(gateway_client, mock_redis):
         return_value=httpx.Response(
             200,
             json={
-                "access_token": "fake-access",
+                "access_token": _MOCK_JWT,
                 "refresh_token": "fake-refresh",
                 "expires_in": 900,
             },
@@ -30,9 +51,38 @@ async def test_login_success(gateway_client, mock_redis):
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert data["access_token"] == "fake-access"
+    assert data["access_token"] == _MOCK_JWT
     assert data["refresh_token"] == "fake-refresh"
     assert data["token_type"] == "bearer"
+    assert "user" in data
+    assert data["user"]["email"] == "admin@company.com"
+    assert data["user"]["groups"] == ["admin"]
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_login_with_email_field(gateway_client, mock_redis):
+    """POST /api/v1/auth/login should accept 'email' as login identifier."""
+    respx.post(
+        "https://keycloak.company.com/realms/mlops-platform/protocol/openid-connect/token"
+    ).mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "access_token": _MOCK_JWT,
+                "refresh_token": "fake-refresh",
+                "expires_in": 900,
+            },
+        )
+    )
+
+    resp = await gateway_client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@company.com", "password": "secret"},
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["user"]["email"] == "admin@company.com"
 
 
 @pytest.mark.asyncio

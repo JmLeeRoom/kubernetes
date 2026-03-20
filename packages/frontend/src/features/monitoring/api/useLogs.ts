@@ -14,7 +14,7 @@ export function useLogs({ query, start, end, limit = 100, enabled = true }: Logs
   return useQuery<LogQueryResult>({
     queryKey: ['logs', query, start, end, limit],
     queryFn: async () => {
-      const { data } = await api.get('/logs/query', {
+      const { data } = await api.get('/monitoring/logs/query', {
         params: { query, start, end, limit },
       });
       return data;
